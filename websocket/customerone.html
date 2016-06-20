@@ -1,0 +1,94 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="bootstrap/css/bootstrap.css">
+    <style>
+        #pover_wrap{
+            position: fixed;
+            bottom: 100px;
+            right: 10px;
+        }
+        .popover{
+            max-width: 500px;
+        }
+
+    </style>
+</head>
+<body>
+<!--data-content="<p>the default content</p><p>the first message</p><p>the second message</p>"-->
+<div>
+    <p>i am user1</p>
+    <div id="pover_wrap">
+    <button type="button" class="btn btn-primary popover-hide"
+            title="last orders" data-container="body"
+            data-toggle="popover" data-placement="left"
+            data-content="<p style='width:400px'>the first msg</p><p>the second msg</p><p>the third msg</p>"
+           >
+        Popover
+    </button>
+    </div>
+</div>
+<script src='bootstrap/js/jquery-3.0.0.min.js'></script>
+<script src='bootstrap/js/bootstrap.min.js'></script>
+<script src='http://cdn.bootcss.com/socket.io/1.3.7/socket.io.js'></script>
+<script>
+    // 连接服务端
+    var socket = io('http://localhost:2120');
+    // uid可以是自己网站的用户id，以便针对uid推送以及统计在线人数
+    uid = 1;
+    // socket连接后以uid登录
+    socket.on('connect', function(){
+        socket.emit('login', uid);
+    });
+    // 后端推送来消息时
+    socket.on('new_msg', function(msg){
+//        $("[data-toggle='popover']").attr('data-content',msg);
+        var role = $('.popover').attr('role');
+        var data = $("[data-toggle='popover']").attr('data-content');
+
+       if(typeof(role)=='undefined'){
+           changeData(data,msg);
+
+       }else{
+           changeData(data,msg);
+           addShowData(msg);
+       }
+
+
+
+        console.log("收到消息："+msg);
+    });
+    // 后端推送来在线数据时
+    socket.on('update_online_count', function(online_stat){
+        console.log(online_stat);
+    });
+    $(function () {
+        $("[data-toggle='popover']").popover({html:'the first message'});
+    })
+
+    function changeData(data,msg) {
+        if(data.split('</p>').length<6){                           //小于11是因为，这个data.split('</p>').length比实际的数值大1
+            var newp = '<p>'+msg+'</p>';
+            var ret = newp+data;
+            $("[data-toggle='popover']").attr('data-content',ret);
+
+        }else{
+            var gp = data.split('</p>');
+
+            var ret = data.replace(gp[0],'<p>'+msg);
+            $("[data-toggle='popover']").attr('data-content',ret);
+        }
+    }
+
+    function addShowData(msg) {
+        var itemnums = $('.popover .popover-content').children('p').length;
+
+        if(itemnums<5){
+            $('.popover .popover-content').prepend('<p>'+msg+'</p>')
+        }else{
+            $('.popover .popover-content').children('p').eq(0).replaceWith('<p>'+msg+'</p>')
+        }
+    }
+
+</script>
+</body>
+</html>
